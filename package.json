@@ -1,0 +1,23 @@
+{
+  "name": "inkspace",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaitanya-Uike/inkspace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chaitanya-Uike/inkspace/issues"
+  },
+  "homepage": "https://github.com/chaitanya-Uike/inkspace#readme",
+  "description": "",
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  }
+}
