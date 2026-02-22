@@ -1,36 +1,33 @@
-export interface SelectionState {
-  anchor: number;
-  head: number;
-}
+import { Selection } from "./selection";
 
 export interface RemoteUser {
   id: string;
   label: string;
-  selection: SelectionState;
+  selection: Selection;
   labelVisible?: boolean;
 }
 
-type SelectionChangeCallback = (state: SelectionState) => void;
-type ContentChangeCallback = (content: string) => void;
+export class ContentChangeEvent extends Event {
+  constructor(public readonly content: string) {
+    super("content-change");
+  }
+}
 
-export class Editor {
+export class SelectionChangeEvent extends Event {
+  constructor(public readonly selection: Selection) {
+    super("selection-change");
+  }
+}
+
+export class Editor extends EventTarget {
   private container: HTMLDivElement;
   private textarea: HTMLTextAreaElement;
   private mirror: HTMLDivElement;
   private remoteUsers: Map<string, RemoteUser> = new Map();
-
-  private onSelectionChange: SelectionChangeCallback;
-  private onContentChange: ContentChangeCallback;
   private labelTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
-  constructor(
-    initialContent: string,
-    onSelectionChange: SelectionChangeCallback,
-    onContentChange: ContentChangeCallback,
-  ) {
-    this.onSelectionChange = onSelectionChange;
-    this.onContentChange = onContentChange;
-
+  constructor(initialContent: string) {
+    super();
     this.mirror = document.createElement("div");
     this.mirror.className = "mirror";
 
@@ -73,19 +70,27 @@ export class Editor {
     });
 
     this.textarea.addEventListener("input", () => {
-      this.onContentChange(this.textarea.value);
+      this.onContentChanged(this.textarea.value);
       this.render();
     });
 
     document.addEventListener("selectionchange", () => {
       if (document.activeElement === this.textarea) {
-        const state = this._getSelectionState();
-        this.onSelectionChange(state);
+        const state = this.getSelectionState();
+        this.onSelectionChanged(state);
       }
     });
   }
 
-  private _getSelectionState(): SelectionState {
+  private onContentChanged(newContent: string) {
+    this.dispatchEvent(new ContentChangeEvent(newContent));
+  }
+
+  private onSelectionChanged(selection: Selection) {
+    this.dispatchEvent(new SelectionChangeEvent(selection));
+  }
+
+  private getSelectionState(): Selection {
     const { selectionStart, selectionEnd, selectionDirection } = this.textarea;
     if (selectionDirection === "backward") {
       return { anchor: selectionEnd, head: selectionStart };

@@ -1,19 +1,18 @@
 import { Client } from "./client";
 import { findEdits } from "./edit";
-import { Editor } from "./editor";
+import { ContentChangeEvent, Editor, SelectionChangeEvent } from "./editor";
 import { deserializeOperation, Operation } from "./ot";
 import { Selection, transformSelection } from "./selection";
 import { ServerMessage } from "./types";
-import { getWebSocketUrl } from "./utils";
+import { debounce, getWebSocketUrl } from "./utils";
 
 export class CollabSession {
   private socket: WebSocket;
   private client: Client | null = null;
-  private editor: Editor;
 
-  constructor(editor: Editor) {
-    this.editor = editor;
+  constructor(private readonly editor: Editor) {
     this.socket = this.connect();
+    this.bindEditorEvents();
   }
 
   private connect(): WebSocket {
@@ -40,6 +39,19 @@ export class CollabSession {
     );
 
     return socket;
+  }
+
+  private bindEditorEvents(): void {
+    this.editor.addEventListener(
+      "content-change",
+      debounce((e: Event) => {
+        this.onContentChange((e as ContentChangeEvent).content);
+      }, 500),
+    );
+
+    this.editor.addEventListener("selection-change", (e: Event) => {
+      this.onSelectionChange((e as SelectionChangeEvent).selection);
+    });
   }
 
   send(type: string, payload: unknown): void {
