@@ -1,11 +1,11 @@
 package ot
 
 type Selection struct {
-	Anchor int
-	Head   int
+	Anchor int `json:"anchor"`
+	Head   int `json:"head"`
 }
 
-func TransformSelection(selection Selection, operation *Operation) Selection {
+func TransformSelection(selection *Selection, operation *Operation) *Selection {
 	transformIndex := func(index int) int {
 		newIndex := index
 		for _, op := range operation.Ops {
@@ -27,7 +27,7 @@ func TransformSelection(selection Selection, operation *Operation) Selection {
 
 	newAnchor := transformIndex(selection.Anchor)
 	if selection.Anchor == selection.Head {
-		return Selection{Anchor: newAnchor, Head: newAnchor}
+		return &Selection{Anchor: newAnchor, Head: newAnchor}
 	}
-	return Selection{Anchor: newAnchor, Head: transformIndex(selection.Head)}
+	return &Selection{Anchor: newAnchor, Head: transformIndex(selection.Head)}
 }

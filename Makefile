@@ -17,7 +17,7 @@ live/server:
 
 # watch tailwind
 live/tailwind:
-	npx --yes tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch
+	npx --yes tailwindcss -i ./assets/css/input.css -o ./static/css/output.css --watch
 
 # watch typescript with esbuild
 live/esbuild:
@@ -40,7 +40,7 @@ live:
 # production build
 build:
 	templ generate
-	npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+	npx tailwindcss -i ./assets/css/input.css -o ./static/css/output.css --minify
 	npx esbuild static/js/app.ts --bundle --outdir=static/js/
 	go build -o bin/server ./cmd/server
 

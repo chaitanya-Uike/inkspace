@@ -16,7 +16,7 @@ type Operation struct {
 	Ops          []Op
 	BaseLength   int
 	TargetLength int
-	ClientID     int
+	ClientID     string
 }
 
 func NewOperation() *Operation {
@@ -81,6 +81,17 @@ func (o *Operation) Delete(n int) *Operation {
 	}
 	o.Ops = append(o.Ops, DeleteOp{N: n})
 	return o
+}
+
+func (o *Operation) IsNoop() bool {
+	if len(o.Ops) == 0 {
+		return true
+	}
+	if len(o.Ops) == 1 {
+		_, ok := o.Ops[0].(RetainOp)
+		return ok
+	}
+	return false
 }
 
 func (o *Operation) Apply(str string) (string, error) {
@@ -248,10 +259,10 @@ func Transform(op1, op2 *Operation) (*Operation, *Operation, error) {
 // wire format: positive int = retain, negative int = delete, string = insert
 
 type OperationData struct {
-	ClientID     int   `json:"cid"`
-	Ops          []any `json:"ops"`
-	BaseLength   int   `json:"base"`
-	TargetLength int   `json:"target"`
+	ClientID     string `json:"cid"`
+	Ops          []any  `json:"ops"`
+	BaseLength   int    `json:"base"`
+	TargetLength int    `json:"target"`
 }
 
 func SerializeOperation(op *Operation) OperationData {

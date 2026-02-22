@@ -6,7 +6,6 @@ export interface SelectionState {
 export interface RemoteUser {
   id: string;
   label: string;
-  color: string;
   selection: SelectionState;
   labelVisible?: boolean;
 }
@@ -52,11 +51,19 @@ export class Editor {
     this.setupEvents();
     this.render();
 
-    (this as any).root = wrapper;
+    (this as any)._root = wrapper;
+  }
+
+  attach(selector: string) {
+    document.querySelector(selector)?.append(this.el);
+  }
+
+  getContent() {
+    return this.textarea.value;
   }
 
   get el(): HTMLElement {
-    return (this as any).root;
+    return (this as any)._root;
   }
 
   private setupEvents() {
@@ -72,13 +79,13 @@ export class Editor {
 
     document.addEventListener("selectionchange", () => {
       if (document.activeElement === this.textarea) {
-        const state = this.getSelectionState();
+        const state = this._getSelectionState();
         this.onSelectionChange(state);
       }
     });
   }
 
-  private getSelectionState(): SelectionState {
+  private _getSelectionState(): SelectionState {
     const { selectionStart, selectionEnd, selectionDirection } = this.textarea;
     if (selectionDirection === "backward") {
       return { anchor: selectionEnd, head: selectionStart };
@@ -119,11 +126,19 @@ export class Editor {
     this.render();
   }
 
+  getRemoteUsers(): RemoteUser[] {
+    return Object.values(this.remoteUsers);
+  }
+
   private escapeHtml(text: string): string {
     return text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+  }
+
+  private isFirstLine(pos: number, text: string): boolean {
+    return !text.slice(0, pos).includes("\n");
   }
 
   private render() {
@@ -158,16 +173,22 @@ export class Editor {
       html += this.escapeHtml(text.slice(pos, event.pos));
       pos = event.pos;
 
+      const color = this.stringToColor(event.user.id);
+
       if (event.type === "cursor") {
+        const firstLine = this.isFirstLine(event.pos, text);
+        const labelClass = `cursor-label${firstLine ? " cursor-label--below" : ""}`;
         const labelHtml = event.user.labelVisible
-          ? `<span class="cursor-label" style="background:${event.user.color}">${this.escapeHtml(event.user.label)}</span>`
+          ? `<span class="${labelClass}" style="background:${color.solid}">${this.escapeHtml(event.user.label)}</span>`
           : "";
-        html += `<span style="border-left: 2px solid ${event.user.color}; margin-left: -1px; position: relative;">${labelHtml}</span>`;
+        html += `<span style="border-left: 2px solid ${color.solid}; margin-left: -1px; position: relative;">${labelHtml}</span>`;
       } else if (event.type === "open") {
+        const firstLine = this.isFirstLine(event.pos, text);
+        const labelClass = `cursor-label${firstLine ? " cursor-label--below" : ""}`;
         const labelHtml = event.user.labelVisible
-          ? `<span class="cursor-label" style="background:${event.user.color}">${this.escapeHtml(event.user.label)}</span>`
+          ? `<span class="${labelClass}" style="background:${color.solid}">${this.escapeHtml(event.user.label)}</span>`
           : "";
-        html += `<span class="remote-highlight" style="background:${event.user.color}44; border-bottom: 2px solid ${event.user.color}; position: relative;">${labelHtml}`;
+        html += `<span class="remote-highlight" style="background:${color.highlight}; border-bottom: 2px solid ${color.solid}; position: relative;">${labelHtml}`;
       } else {
         html += `</span>`;
       }
@@ -177,10 +198,19 @@ export class Editor {
     this.mirror.innerHTML = html;
   }
 
-  getRemoteSelections(): { userId: string; selection: SelectionState }[] {
-    return Array.from(this.remoteUsers.entries()).map(([id, user]) => ({
-      userId: id,
-      selection: user.selection,
-    }));
+  private stringToColor(str: string) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      hash |= 0;
+    }
+    const h = Math.abs(hash) % 360;
+    const s = 55 + (Math.abs(hash >> 8) % 25);
+    const l = 45 + (Math.abs(hash >> 16) % 20);
+
+    return {
+      solid: `hsl(${h}, ${s}%, ${l}%)`,
+      highlight: `hsla(${h}, ${s}%, ${l}%, 0.28)`,
+    };
   }
 }

@@ -1,14 +1,14 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+import { Editor } from "./editor";
+import { CollabSession } from "./session";
+import { debounce } from "./utils";
 
-  socket.onopen = () => console.log("[ws] connected");
-  socket.onclose = () => console.log("[ws] disconnected");
-  socket.onmessage = (e) => console.log("[ws] message:", e.data);
+let session: CollabSession;
 
-  // Test: send a message 1 second after connecting
-  socket.onopen = () => {
-    console.log("[ws] connected");
-    setTimeout(() => socket.send("hello from browser"), 1000);
-  };
-});
+const editor = new Editor(
+  "",
+  (selection) => session.onSelectionChange(selection),
+  debounce((newContent: string) => session.onContentChange(newContent), 500),
+);
+
+session = new CollabSession(editor);
+editor.attach("#editor");

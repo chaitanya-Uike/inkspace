@@ -1,0 +1,10 @@
+package views
+
+var editorStyleHandleOnce = templ.NewOnceHandle()
+
+templ Editor() {
+	@editorStyleHandleOnce.Once() {
+		<link rel="stylesheet" href="/static/css/editor.css"/>
+	}
+	<div id="editor" class="px-10 py-10 bg-[#f5f2ec] h-full"></div>
+}

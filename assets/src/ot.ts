@@ -27,7 +27,7 @@ export class Operation {
   ops: Op[] = [];
   baseLength = 0;
   targetLength = 0;
-  clientID: number = 0;
+  clientID = "";
 
   retain(n: number): this {
     if (n === 0) return this;
@@ -193,7 +193,7 @@ export function transform(
 export type WireOp = string | number;
 
 export interface OperationData {
-  cid: number;
+  cid: string;
   ops: WireOp[];
   base: number;
   target: number;
